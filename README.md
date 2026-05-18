@@ -7,7 +7,7 @@ Cloud Run service that replays Berlin 2024 R10 race telemetry at race pace, publ
 - Loads a precomputed frames artifact (`frames_v1.jsonl.gz`, ~3 MB, ~2900 frames) from GCS into memory at startup.
 - Streams one JSON frame per race-second to the `fe-telemetry` Pub/Sub topic.
 - Real race is ~47:48 (2868 seconds). Adjust pace with `REPLAY_SPEED_MULTIPLIER` or the `/speed` endpoint.
-- Exposes control endpoints for pause, resume, restart, jump, speed change, and auto-restart toggle.
+- Exposes a browsable HTML index at `/` and control endpoints for pause, resume, restart, jump, speed change, and auto-restart toggle.
 
 ## Architecture
 
@@ -43,20 +43,26 @@ Requires: gcloud CLI authenticated to a project where you have Owner or Editor. 
 
 If your project can't read `gs://class-demo` (cross-project), the bucket owner needs to grant `roles/storage.objectViewer` to the service account printed by the script.
 
+After deploy, visit the service URL in a browser for a live status page with clickable endpoint links.
+
 ## Endpoints
 
 | Method | Path          | Body                       | Purpose                                |
 |--------|---------------|----------------------------|----------------------------------------|
-| GET    | /healthz      | —                          | Liveness                               |
+| GET    | /             | —                          | HTML index with live state + endpoints |
+| GET    | /health       | —                          | Liveness probe                         |
 | GET    | /status       | —                          | Current race time, lap, publish count  |
 | GET    | /config       | —                          | Active settings                        |
 | GET    | /schema       | —                          | Sample frame for agent devs            |
+| GET    | /docs         | —                          | Auto-generated Swagger UI              |
 | POST   | /restart      | —                          | Reset to t=0                           |
 | POST   | /pause        | —                          | Freeze the clock                       |
 | POST   | /resume       | —                          | Resume from pause                      |
 | POST   | /speed        | `{"multiplier": 2.0}`      | Change replay speed live               |
 | POST   | /jump         | `{"race_time_s": 1800}`    | Seek to a specific race time           |
 | POST   | /auto-restart | `{"enabled": true}`        | Toggle loop-on-chequered               |
+
+Note: `/healthz` was renamed to `/health` because Cloud Run's frontend intercepts `/healthz` for its own probes.
 
 ## Local development
 

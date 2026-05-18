@@ -9,6 +9,8 @@ from .config import config
 from .frame_loader import load_frames
 from .publisher import Publisher
 
+from fastapi.responses import HTMLResponse
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -49,8 +51,74 @@ class AutoRestartRequest(BaseModel):
 
 
 # --- Endpoints ---
-@app.get("/healthz")
-def healthz():
+@app.get("/", response_class=HTMLResponse)
+def index():
+    status = publisher.status() if publisher else {}
+    cfg_speed = status.get("speed_multiplier", "—")
+    cfg_paused = status.get("paused", "—")
+    cfg_auto = status.get("auto_restart", "—")
+    cfg_race_time = status.get("race_time_s", "—")
+    cfg_pct = status.get("pct_complete", "—")
+    cfg_publish_count = status.get("publish_count", "—")
+
+    return f"""<!doctype html>
+<html><head>
+  <meta charset="utf-8">
+  <title>Formula E Simulator</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #222; }}
+    h1 {{ margin-bottom: 0.2rem; }}
+    .sub {{ color: #666; margin-top: 0; margin-bottom: 1.5rem; }}
+    table {{ border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }}
+    th, td {{ text-align: left; padding: 0.35rem 0.7rem; border-bottom: 1px solid #eee; }}
+    th {{ background: #f7f7f7; }}
+    code {{ background: #f4f4f4; padding: 0.1rem 0.35rem; border-radius: 3px; }}
+    .method {{ display: inline-block; min-width: 3.2rem;
+               font-size: 0.78rem; padding: 0.1rem 0.4rem; border-radius: 3px;
+               color: #fff; text-align: center; }}
+    .get {{ background: #2c7be5; }}
+    .post {{ background: #28a745; }}
+    .footer {{ color: #888; font-size: 0.85rem; margin-top: 2rem; }}
+  </style>
+</head><body>
+  <h1>Formula E Simulator</h1>
+  <p class="sub">Streaming Berlin 2024 R10 race telemetry at 1 Hz to Pub/Sub.</p>
+
+  <h3>Current state</h3>
+  <table>
+    <tr><th>Race time</th><td>{cfg_race_time}s ({cfg_pct}% complete)</td></tr>
+    <tr><th>Speed multiplier</th><td>{cfg_speed}x</td></tr>
+    <tr><th>Paused</th><td>{cfg_paused}</td></tr>
+    <tr><th>Auto-restart on chequered</th><td>{cfg_auto}</td></tr>
+    <tr><th>Frames published</th><td>{cfg_publish_count}</td></tr>
+    <tr><th>Pub/Sub topic</th><td><code>{status.get("topic", "—")}</code></td></tr>
+  </table>
+
+  <h3>Endpoints</h3>
+  <table>
+    <tr><th>Method</th><th>Path</th><th>Body</th><th>Purpose</th></tr>
+    <tr><td><span class="method get">GET</span></td><td><a href="/status">/status</a></td><td>—</td><td>Live race state + publish stats</td></tr>
+    <tr><td><span class="method get">GET</span></td><td><a href="/config">/config</a></td><td>—</td><td>Active settings</td></tr>
+    <tr><td><span class="method get">GET</span></td><td><a href="/schema">/schema</a></td><td>—</td><td>Sample frame for agent devs</td></tr>
+    <tr><td><span class="method get">GET</span></td><td><a href="/health">/health</a></td><td>—</td><td>Liveness probe</td></tr>
+    <tr><td><span class="method get">GET</span></td><td><a href="/docs">/docs</a></td><td>—</td><td>Auto-generated Swagger UI</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/restart</code></td><td>—</td><td>Reset replay to t=0</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/pause</code></td><td>—</td><td>Freeze the clock</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/resume</code></td><td>—</td><td>Resume from pause</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/speed</code></td><td><code>{{"multiplier": 2.0}}</code></td><td>Change replay speed live</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/jump</code></td><td><code>{{"race_time_s": 1800}}</code></td><td>Seek to a specific race time</td></tr>
+    <tr><td><span class="method post">POST</span></td><td><code>/auto-restart</code></td><td><code>{{"enabled": true}}</code></td><td>Toggle loop-on-chequered</td></tr>
+  </table>
+
+  <p class="footer">
+    Race duration: ~47:48 (2868s). Frames artifact:
+    <code>gs://class-demo/formula-e/r10/simulator/frames_v1.jsonl.gz</code>
+  </p>
+</body></html>"""
+
+@app.get("/health")
+def health():
     return {"ok": True}
 
 
