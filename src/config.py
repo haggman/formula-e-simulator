@@ -12,7 +12,7 @@ class Config:
     # Frames artifact
     FRAMES_BUCKET: str = os.environ.get("FRAMES_BUCKET", "class-demo")
     FRAMES_PATH: str = os.environ.get(
-        "FRAMES_PATH", "formula-e/r10/simulator/frames_v2.jsonl.gz"
+        "FRAMES_PATH", "formula-e/r10/simulator/frames_v3.jsonl.gz"
     )
 
     # Replay behavior

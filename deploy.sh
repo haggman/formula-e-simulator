@@ -11,7 +11,7 @@ REGION="${REGION:-us-central1}"
 TOPIC_NAME="${TOPIC_NAME:-fe-telemetry}"
 SA_NAME="${SA_NAME:-fe-simulator-sa}"
 FRAMES_BUCKET="${FRAMES_BUCKET:-class-demo}"
-FRAMES_PATH="${FRAMES_PATH:-formula-e/r10/simulator/frames_v2.jsonl.gz}"
+FRAMES_PATH="${FRAMES_PATH:-formula-e/r10/simulator/frames_v3.jsonl.gz}"
 REPLAY_SPEED_MULTIPLIER="${REPLAY_SPEED_MULTIPLIER:-1.0}"
 AUTO_RESTART="${AUTO_RESTART:-false}"
 
