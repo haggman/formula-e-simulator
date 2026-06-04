@@ -113,7 +113,7 @@ def index():
 
   <p class="footer">
     Race duration: ~47:48 (2868s). Frames artifact:
-    <code>gs://class-demo/formula-e/r10/simulator/frames_v1.jsonl.gz</code>
+    <code>gs://{config.FRAMES_BUCKET}/{config.FRAMES_PATH}</code>
   </p>
 </body></html>"""
 
